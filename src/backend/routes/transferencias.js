@@ -1,7 +1,12 @@
 const express = require('express')
 const router = express.Router()
+const { realizarTransferencia, obtenerTransferencias } = require('../controllers/transferenciaController')
+const { verificarToken } = require('../middlewares/auth')
 
-// TODO: SBBU-19 - Transacciones
-// TODO: SBBU-16 - Registro de transferencias
+// SBBU-19 - Realizar transferencia
+router.post('/', verificarToken, realizarTransferencia)
+
+// SBBU-16 - Historial de transferencias
+router.get('/', verificarToken, obtenerTransferencias)
 
 module.exports = router
