@@ -1,4 +1,4 @@
-// Controlador de transferencias - SBBU-19
+const logger = require('../utils/logger')
 const pool = require('../db')
 
 // POST /api/transferencias
@@ -7,55 +7,55 @@ const realizarTransferencia = async (req, res) => {
   const cuenta_origen_id = req.usuario.cuenta_id
 
   try {
-    // Validar campos obligatorios
+    logger.debug(`Intento de transferencia desde cuenta_id: ${cuenta_origen_id}`)
+
     if (!cuenta_destino || !monto || !concepto) {
+      logger.warn('Transferencia rechazada: campos obligatorios faltantes')
       return res.status(400).json({ error: 'Cuenta destino, monto y concepto son obligatorios.' })
     }
 
-    // Validar formato cuenta destino (16 dígitos)
     if (!/^\d{16}$/.test(cuenta_destino)) {
+      logger.warn(`Transferencia rechazada: formato de cuenta destino inválido: ${cuenta_destino}`)
       return res.status(400).json({ error: 'El número de cuenta destino debe tener exactamente 16 dígitos.' })
     }
 
-    // Validar monto mínimo
     if (monto < 500) {
+      logger.warn(`Transferencia rechazada: monto menor al mínimo: $${monto}`)
       return res.status(400).json({ error: 'El monto mínimo de transferencia es $500.00 MXN.' })
     }
 
-    // Validar máximo 2 decimales
     if (!/^\d+(\.\d{1,2})?$/.test(monto.toString())) {
+      logger.warn(`Transferencia rechazada: más de 2 decimales en monto: ${monto}`)
       return res.status(400).json({ error: 'El monto no puede tener más de 2 decimales.' })
     }
 
-    // Obtener cuenta origen
     const origenResult = await pool.query(
       'SELECT * FROM cuenta WHERE id = $1',
       [cuenta_origen_id]
     )
     const cuentaOrigen = origenResult.rows[0]
 
-    // Verificar saldo suficiente
     if (parseFloat(cuentaOrigen.saldo) < monto) {
+      logger.warn(`Transferencia rechazada: saldo insuficiente en cuenta_id: ${cuenta_origen_id}`)
       return res.status(400).json({ error: 'Saldo insuficiente para realizar la transferencia.' })
     }
 
-    // Obtener cuenta destino
     const destinoResult = await pool.query(
       'SELECT * FROM cuenta WHERE numero_cuenta = $1',
       [cuenta_destino]
     )
 
     if (destinoResult.rows.length === 0) {
+      logger.warn(`Transferencia rechazada: cuenta destino no existe: ${cuenta_destino}`)
       return res.status(404).json({ error: 'La cuenta destino no existe.' })
     }
     const cuentaDestino = destinoResult.rows[0]
 
-    // Verificar que no sea la misma cuenta
     if (cuentaOrigen.id === cuentaDestino.id) {
+      logger.warn(`Transferencia rechazada: mismo origen y destino: ${cuenta_destino}`)
       return res.status(400).json({ error: 'No puedes transferir a tu propia cuenta.' })
     }
 
-    // Verificar límite diario ($7,000)
     const hoy = new Date().toISOString().split('T')[0]
     const limiteResult = await pool.query(
       'SELECT monto_acumulado FROM limite_diario WHERE cuenta_id = $1 AND fecha = $2',
@@ -64,39 +64,35 @@ const realizarTransferencia = async (req, res) => {
     const acumulado = limiteResult.rows.length > 0 ? parseFloat(limiteResult.rows[0].monto_acumulado) : 0
 
     if (acumulado + parseFloat(monto) > 7000) {
+      logger.warn(`Transferencia rechazada: límite diario excedido. Acumulado: $${acumulado}`)
       return res.status(400).json({ 
         error: `Límite diario excedido. Llevas $${acumulado} transferidos hoy. Límite: $7,000 MXN.` 
       })
     }
 
-    // Verificar tope de cuenta destino ($50,000)
     if (parseFloat(cuentaDestino.saldo) + parseFloat(monto) > 50000) {
+      logger.warn(`Transferencia rechazada: cuenta destino superaría tope de $50,000`)
       return res.status(400).json({ error: 'La cuenta destino superaría el límite máximo de $50,000 MXN.' })
     }
 
-    // Ejecutar transferencia (transacción atómica)
     await pool.query('BEGIN')
 
-    // Debitar origen
     await pool.query(
       'UPDATE cuenta SET saldo = saldo - $1 WHERE id = $2',
       [monto, cuenta_origen_id]
     )
 
-    // Acreditar destino
     await pool.query(
       'UPDATE cuenta SET saldo = saldo + $1 WHERE id = $2',
       [monto, cuentaDestino.id]
     )
 
-    // Registrar transacción
     const transaccionResult = await pool.query(
       `INSERT INTO transaccion (cuenta_origen_id, cuenta_destino_id, monto, concepto, tipo)
        VALUES ($1, $2, $3, $4, 'transferencia') RETURNING *`,
       [cuenta_origen_id, cuentaDestino.id, monto, concepto]
     )
 
-    // Actualizar límite diario
     await pool.query(
       `INSERT INTO limite_diario (cuenta_id, fecha, monto_acumulado)
        VALUES ($1, $2, $3)
@@ -107,6 +103,8 @@ const realizarTransferencia = async (req, res) => {
 
     await pool.query('COMMIT')
 
+    logger.info(`Transferencia exitosa: $${monto} de cuenta_id ${cuenta_origen_id} a ${cuenta_destino}`)
+
     res.json({
       mensaje: 'Transferencia realizada exitosamente.',
       transaccion: transaccionResult.rows[0]
@@ -114,7 +112,7 @@ const realizarTransferencia = async (req, res) => {
 
   } catch (err) {
     await pool.query('ROLLBACK')
-    console.error('Error en transferencia:', err.message)
+    logger.error(`Error en transferencia: ${err.message}`)
     res.status(500).json({ error: 'Error interno del servidor.' })
   }
 }
@@ -127,6 +125,8 @@ const obtenerTransferencias = async (req, res) => {
   const offset = (page - 1) * limit
 
   try {
+    logger.debug(`Obteniendo transferencias para cuenta_id: ${cuenta_id}, página: ${page}`)
+
     const result = await pool.query(
       `SELECT t.id, t.concepto, t.monto, t.tipo, t.fecha_hora,
               co.numero_cuenta as cuenta_origen,
@@ -140,13 +140,15 @@ const obtenerTransferencias = async (req, res) => {
       [cuenta_id, limit, offset]
     )
 
+    logger.info(`Historial obtenido: ${result.rows.length} registros para cuenta_id: ${cuenta_id}`)
+
     res.json({
       page,
       transferencias: result.rows
     })
 
   } catch (err) {
-    console.error('Error obteniendo transferencias:', err.message)
+    logger.error(`Error obteniendo transferencias: ${err.message}`)
     res.status(500).json({ error: 'Error interno del servidor.' })
   }
 }

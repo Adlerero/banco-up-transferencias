@@ -1,4 +1,4 @@
-// Controlador de autenticación - SBBU-5
+const logger = require('../utils/logger')
 const pool = require('../db')
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
@@ -8,7 +8,8 @@ const login = async (req, res) => {
   const { numero_cuenta, contrasena } = req.body
 
   try {
-    // Buscar cuenta y usuario asociado
+    logger.debug(`Intento de login para cuenta: ${numero_cuenta}`)
+
     const result = await pool.query(
       `SELECT u.id, u.nombre, u.apellido, u.contrasena_hash, 
               u.intentos_fallidos, u.bloqueado, u.rol_id,
@@ -20,23 +21,21 @@ const login = async (req, res) => {
       [numero_cuenta]
     )
 
-    // Verificar que existe la cuenta
     if (result.rows.length === 0) {
+      logger.warn(`Cuenta no encontrada: ${numero_cuenta}`)
       return res.status(401).json({ error: 'Número de cuenta o contraseña incorrectos.' })
     }
 
     const usuario = result.rows[0]
 
-    // Verificar si está bloqueado
     if (usuario.bloqueado) {
+      logger.warn(`Intento de acceso a cuenta bloqueada: ${numero_cuenta}`)
       return res.status(403).json({ error: 'Cuenta bloqueada. Contacta a un administrador.' })
     }
 
-    // Verificar contraseña
     const contrasenaValida = await bcrypt.compare(contrasena, usuario.contrasena_hash)
 
     if (!contrasenaValida) {
-      // Incrementar intentos fallidos
       const intentos = usuario.intentos_fallidos + 1
       const bloqueado = intentos >= 4
 
@@ -46,21 +45,21 @@ const login = async (req, res) => {
       )
 
       if (bloqueado) {
+        logger.warn(`Cuenta bloqueada por intentos fallidos: ${numero_cuenta}`)
         return res.status(403).json({ error: 'Cuenta bloqueada por múltiples intentos fallidos. Contacta a un administrador.' })
       }
 
+      logger.warn(`Contraseña incorrecta para cuenta: ${numero_cuenta}. Intento ${intentos}/4`)
       return res.status(401).json({ 
         error: `Contraseña incorrecta. Intentos fallidos: ${intentos}/4` 
       })
     }
 
-    // Resetear intentos fallidos al login exitoso
     await pool.query(
       `UPDATE usuario SET intentos_fallidos = 0 WHERE id = $1`,
       [usuario.id]
     )
 
-    // Generar JWT
     const token = jwt.sign(
       {
         id: usuario.id,
@@ -73,6 +72,8 @@ const login = async (req, res) => {
       process.env.JWT_SECRET,
       { expiresIn: '8h' }
     )
+
+    logger.info(`Login exitoso para cuenta: ${numero_cuenta} | Rol: ${usuario.rol}`)
 
     res.json({
       mensaje: 'Login exitoso',
@@ -87,14 +88,14 @@ const login = async (req, res) => {
     })
 
   } catch (err) {
-    console.error('Error en login:', err.message)
+    logger.error(`Error en login: ${err.message}`)
     res.status(500).json({ error: 'Error interno del servidor.' })
   }
 }
 
 // POST /api/auth/logout
 const logout = async (req, res) => {
-  // Con JWT stateless el logout se maneja en el frontend eliminando el token
+  logger.info(`Logout de usuario: ${req.usuario.numero_cuenta}`)
   res.json({ mensaje: 'Sesión cerrada correctamente.' })
 }
 
