@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Banco UP - Panel Administrador</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="admin-container">
+        <div class="admin-card">
+
+            <div class="admin-header">
+                <div>
+                    <div class="user-name">Panel de Administrador</div>
+                    <div class="user-account">Banco UP - Gestión de Cuentas</div>
+                </div>
+                <button class="btn-outline" onclick="logout()">Cerrar Sesión</button>
+            </div>
+
+            <div id="error-msg" class="error-msg" style="display:none;"></div>
+            <div id="success-msg" class="success-msg" style="display:none;"></div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Email</th>
+                        <th>No. Cuenta</th>
+                        <th>Saldo</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="tabla-usuarios">
+                    <tr><td colspan="6" style="text-align:center; color:#999;">Cargando...</td></tr>
+                </tbody>
+            </table>
+
+        </div>
+    </div>
+
+    <script>
+        const token = localStorage.getItem('token')
+        const usuario = JSON.parse(localStorage.getItem('usuario') || '{}')
+
+        if (!token) window.location.href = 'index.html'
+        if (usuario.rol !== 'administrador') window.location.href = 'dashboard.html'
+
+        async function cargarUsuarios() {
+            try {
+                const res = await fetch('http://localhost:3000/api/admin/usuarios', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                })
+
+                const data = await res.json()
+
+                const tbody = document.getElementById('tabla-usuarios')
+                tbody.innerHTML = data.usuarios.map(u => `
+                    <tr>
+                        <td>${u.nombre} ${u.apellido}</td>
+                        <td>${u.email}</td>
+                        <td>${u.numero_cuenta}</td>
+                        <td>$${parseFloat(u.saldo).toLocaleString('es-MX', {minimumFractionDigits: 2})}</td>
+                        <td>
+                            ${u.bloqueado 
+                                ? '<span class="badge-bloqueado">Bloqueado</span>' 
+                                : '<span class="badge-activo">Activo</span>'}
+                        </td>
+                        <td>
+                            ${u.bloqueado
+                                ? `<button class="btn-sm btn-desbloquear" onclick="desbloquear(${u.id})">Desbloquear</button>`
+                                : `<button class="btn-sm btn-bloquear" onclick="bloquear(${u.id})">Bloquear</button>`}
+                        </td>
+                    </tr>
+                `).join('')
+
+            } catch (err) {
+                document.getElementById('error-msg').textContent = 'Error cargando usuarios.'
+                document.getElementById('error-msg').style.display = 'block'
+            }
+        }
+
+        async function bloquear(id) {
+            try {
+                const res = await fetch(`http://localhost:3000/api/admin/usuarios/${id}/bloquear`, {
+                    method: 'PUT',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                })
+                const data = await res.json()
+                mostrarExito(data.mensaje)
+                cargarUsuarios()
+            } catch (err) {
+                mostrarError('Error al bloquear usuario.')
+            }
+        }
+
+        async function desbloquear(id) {
+            try {
+                const res = await fetch(`http://localhost:3000/api/admin/usuarios/${id}/desbloquear`, {
+                    method: 'PUT',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                })
+                const data = await res.json()
+                mostrarExito(data.mensaje)
+                cargarUsuarios()
+            } catch (err) {
+                mostrarError('Error al desbloquear usuario.')
+            }
+        }
+
+        function mostrarExito(msg) {
+            const el = document.getElementById('success-msg')
+            el.textContent = msg
+            el.style.display = 'block'
+            setTimeout(() => el.style.display = 'none', 3000)
+        }
+
+        function mostrarError(msg) {
+            const el = document.getElementById('error-msg')
+            el.textContent = msg
+            el.style.display = 'block'
+        }
+
+        function logout() {
+            localStorage.removeItem('token')
+            localStorage.removeItem('usuario')
+            window.location.href = 'index.html'
+        }
+
+        cargarUsuarios()
+    </script>
+</body>
+</html>

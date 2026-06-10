@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Banco UP - Iniciar Sesión</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="bg-gradient">
+        <div class="login-card">
+            <div class="logo">Banco UP</div>
+
+            <div id="error-msg" class="error-msg" style="display:none;"></div>
+
+            <div class="input-group">
+                <label>Número de Cuenta (16 dígitos)</label>
+                <input type="text" id="numero_cuenta" placeholder="0000 0000 0000 0000" maxlength="19">
+            </div>
+
+            <div class="input-group">
+                <label>Contraseña</label>
+                <input type="password" id="contrasena" placeholder="••••••••">
+            </div>
+
+            <button class="btn-primary" onclick="login()">Entrar</button>
+
+            <p class="login-note">Acceso exclusivo para clientes y administradores</p>
+        </div>
+    </div>
+
+    <script>
+        // Formatear número de cuenta con espacios cada 4 dígitos
+        document.getElementById('numero_cuenta').addEventListener('input', function(e) {
+            let val = e.target.value.replace(/\D/g, '').substring(0, 16)
+            e.target.value = val.replace(/(.{4})/g, '$1 ').trim()
+        })
+
+        async function login() {
+            const numeroCuenta = document.getElementById('numero_cuenta').value.replace(/\s/g, '')
+            const contrasena = document.getElementById('contrasena').value
+            const errorMsg = document.getElementById('error-msg')
+
+            if (!numeroCuenta || !contrasena) {
+                mostrarError('Por favor completa todos los campos.')
+                return
+            }
+
+            try {
+                const res = await fetch('http://localhost:3000/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ numero_cuenta: numeroCuenta, contrasena })
+                })
+
+                const data = await res.json()
+
+                if (!res.ok) {
+                    mostrarError(data.error)
+                    return
+                }
+
+                // Guardar token y datos de usuario
+                localStorage.setItem('token', data.token)
+                localStorage.setItem('usuario', JSON.stringify(data.usuario))
+
+                // Redirigir según rol
+                if (data.usuario.rol === 'administrador') {
+                    window.location.href = 'admin.html'
+                } else {
+                    window.location.href = 'dashboard.html'
+                }
+
+            } catch (err) {
+                mostrarError('Error de conexión. Intenta de nuevo.')
+            }
+        }
+
+        function mostrarError(msg) {
+            const errorMsg = document.getElementById('error-msg')
+            errorMsg.textContent = msg
+            errorMsg.style.display = 'block'
+        }
+
+        // Login con Enter
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') login()
+        })
+    </script>
+</body>
+</html>
