@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Banco UP - Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="dashboard-container">
+        <div class="dashboard-card">
+
+            <div class="user-header">
+                <div>
+                    <div class="user-name" id="user-name">Hola, ...</div>
+                    <div class="user-account" id="user-account">Cuenta: ...</div>
+                </div>
+                <button class="btn-outline" onclick="logout()">Cerrar Sesión</button>
+            </div>
+
+            <div class="balance-card">
+                <div class="balance-label">Saldo Disponible</div>
+                <div class="balance-amount" id="saldo">$0.00 MXN</div>
+            </div>
+
+            <div class="section-header">
+                <div class="section-title">Movimientos Recientes</div>
+                <button class="btn-primary" style="width:auto; padding: 8px 16px; font-size:9pt;" 
+                        onclick="window.location.href='transferencia.html'">
+                    Nueva Transferencia
+                </button>
+            </div>
+
+            <div id="error-msg" class="error-msg" style="display:none;"></div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Concepto</th>
+                        <th>Monto</th>
+                        <th>Fecha</th>
+                        <th>Tipo</th>
+                    </tr>
+                </thead>
+                <tbody id="tabla-movimientos">
+                    <tr><td colspan="4" style="text-align:center; color:#999;">Cargando...</td></tr>
+                </tbody>
+            </table>
+
+            <div class="paginacion">
+                <span id="btn-anterior" onclick="cambiarPagina(-1)" style="display:none;">« Anterior</span>
+                <span id="pagina-info" style="margin: 0 15px; cursor:default;"></span>
+                <span id="btn-siguiente" onclick="cambiarPagina(1)">Siguiente »</span>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        let paginaActual = 1
+        const token = localStorage.getItem('token')
+        const usuario = JSON.parse(localStorage.getItem('usuario') || '{}')
+
+        // Verificar sesión
+        if (!token) window.location.href = 'index.html'
+
+        // Mostrar datos del usuario
+        document.getElementById('user-name').textContent = `Hola, ${usuario.nombre} ${usuario.apellido || ''}`
+        document.getElementById('user-account').textContent = `Cuenta: ${usuario.numero_cuenta}`
+        document.getElementById('saldo').textContent = `$${parseFloat(usuario.saldo).toLocaleString('es-MX', {minimumFractionDigits: 2})} MXN`
+
+        async function cargarMovimientos(pagina = 1) {
+            try {
+                const res = await fetch(`http://localhost:3000/api/transferencias?page=${pagina}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                })
+
+                if (res.status === 403) {
+                    logout()
+                    return
+                }
+
+                const data = await res.json()
+                const tbody = document.getElementById('tabla-movimientos')
+
+                if (data.transferencias.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#999;">Sin movimientos</td></tr>'
+                    document.getElementById('btn-siguiente').style.display = 'none'
+                    return
+                }
+
+                tbody.innerHTML = data.transferencias.map(t => {
+                    const esEnviada = t.cuenta_origen === usuario.numero_cuenta
+                    const monto = parseFloat(t.monto)
+                    const montoStr = esEnviada 
+                        ? `<span class="monto-negativo">- $${monto.toLocaleString('es-MX', {minimumFractionDigits: 2})}</span>`
+                        : `<span class="monto-positivo">+ $${monto.toLocaleString('es-MX', {minimumFractionDigits: 2})}</span>`
+                    const fecha = new Date(t.fecha_hora).toLocaleDateString('es-MX')
+                    const tipo = esEnviada ? 'Transferencia' : 'Depósito'
+                    return `<tr>
+                        <td>${t.concepto}</td>
+                        <td>${montoStr}</td>
+                        <td>${fecha}</td>
+                        <td>${tipo}</td>
+                    </tr>`
+                }).join('')
+
+                // Paginación
+                document.getElementById('pagina-info').textContent = `Página ${pagina}`
+                document.getElementById('btn-anterior').style.display = pagina > 1 ? 'inline' : 'none'
+                document.getElementById('btn-siguiente').style.display = data.transferencias.length === 5 ? 'inline' : 'none'
+
+            } catch (err) {
+                document.getElementById('error-msg').textContent = 'Error cargando movimientos.'
+                document.getElementById('error-msg').style.display = 'block'
+            }
+        }
+
+        function cambiarPagina(dir) {
+            paginaActual += dir
+            cargarMovimientos(paginaActual)
+        }
+
+        function logout() {
+            localStorage.removeItem('token')
+            localStorage.removeItem('usuario')
+            window.location.href = 'index.html'
+        }
+
+        async function init() {
+            // Obtener saldo actualizado desde el backend
+            try {
+                const resSaldo = await fetch('http://localhost:3000/api/auth/saldo', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                })
+                const dataSaldo = await resSaldo.json()
+                document.getElementById('saldo').textContent = `$${parseFloat(dataSaldo.saldo).toLocaleString('es-MX', {minimumFractionDigits: 2})} MXN`
+            } catch(err) {}
+
+            cargarMovimientos()
+        }
+
+        init()
+    </script>
+</body>
+</html>

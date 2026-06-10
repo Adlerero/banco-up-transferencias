@@ -1,0 +1,430 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: #333;
+}
+
+/* ── Fondo ── */
+.bg-gradient {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+}
+
+.bg-gradient::before {
+    content: '';
+    position: absolute;
+    width: 500px;
+    height: 500px;
+    background: radial-gradient(circle, rgba(4,50,99,0.4) 0%, transparent 70%);
+    top: -100px;
+    right: -100px;
+    border-radius: 50%;
+}
+
+.bg-gradient::after {
+    content: '';
+    position: absolute;
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, rgba(6,74,147,0.3) 0%, transparent 70%);
+    bottom: -80px;
+    left: -80px;
+    border-radius: 50%;
+}
+
+/* ── Glass Card ── */
+.login-card,
+.dashboard-card,
+.form-card,
+.admin-card {
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 24px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3),
+                inset 0 1px 0 rgba(255,255,255,0.1);
+    color: #fff;
+}
+
+.login-card {
+    width: 100%;
+    max-width: 360px;
+    padding: 40px 30px;
+    text-align: center;
+}
+
+.logo {
+    font-size: 24pt;
+    font-weight: bold;
+    color: #fff;
+    margin-bottom: 30px;
+    text-shadow: 0 0 30px rgba(100,150,255,0.5);
+}
+
+/* ── Dashboard container ── */
+.dashboard-container,
+.admin-container {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    padding: 20px;
+    position: relative;
+}
+
+.dashboard-card,
+.admin-card {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 25px;
+}
+
+.admin-card {
+    max-width: 900px;
+}
+
+/* ── Inputs ── */
+.input-group {
+    margin-bottom: 16px;
+    text-align: left;
+}
+
+.input-group label {
+    display: block;
+    font-size: 9pt;
+    color: rgba(255,255,255,0.6);
+    margin-bottom: 5px;
+}
+
+.input-group input,
+.input-group select {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 10px;
+    font-size: 10pt;
+    background: rgba(255,255,255,0.08);
+    outline: none;
+    color: #fff;
+    transition: border 0.2s;
+}
+
+.input-group input::placeholder {
+    color: rgba(255,255,255,0.3);
+}
+
+.input-group input:focus {
+    border-color: rgba(255,255,255,0.5);
+    background: rgba(255,255,255,0.12);
+}
+
+/* ── Botones ── */
+.btn-primary {
+    background: linear-gradient(135deg, #043263 0%, #064a93 100%);
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    width: 100%;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 10pt;
+    border-radius: 12px;
+    transition: all 0.2s;
+    margin-top: 8px;
+    box-shadow: 0 4px 15px rgba(4,50,99,0.4);
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #064a93 0%, #0860bc 100%);
+    box-shadow: 0 6px 20px rgba(4,50,99,0.6);
+    transform: translateY(-1px);
+}
+
+.btn-outline {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.2);
+    color: rgba(255,255,255,0.8);
+    padding: 8px 16px;
+    cursor: pointer;
+    border-radius: 8px;
+    font-size: 9pt;
+    transition: all 0.2s;
+    backdrop-filter: blur(10px);
+}
+
+.btn-outline:hover {
+    background: rgba(255,255,255,0.15);
+    border-color: rgba(255,255,255,0.4);
+}
+
+.btn-secondary {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.2);
+    color: rgba(255,255,255,0.8);
+    padding: 12px 20px;
+    width: 100%;
+    font-weight: bold;
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 10pt;
+    transition: all 0.2s;
+}
+
+.btn-secondary:hover {
+    background: rgba(255,255,255,0.15);
+}
+
+/* ── User header ── */
+.user-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 15px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.user-name {
+    font-size: 14pt;
+    font-weight: bold;
+    color: #fff;
+}
+
+.user-account {
+    font-size: 9pt;
+    color: rgba(255,255,255,0.5);
+}
+
+/* ── Balance card ── */
+.balance-card {
+    background: linear-gradient(135deg, rgba(4,50,99,0.6) 0%, rgba(6,74,147,0.6) 100%);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.15);
+    color: white;
+    padding: 25px;
+    text-align: center;
+    margin-bottom: 20px;
+    border-radius: 16px;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+}
+
+.balance-label {
+    font-size: 10pt;
+    text-transform: uppercase;
+    opacity: 0.7;
+    margin-bottom: 8px;
+    letter-spacing: 1px;
+}
+
+.balance-amount {
+    font-size: 28pt;
+    font-weight: bold;
+}
+
+/* ── Section header ── */
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.section-title {
+    font-weight: bold;
+    color: rgba(255,255,255,0.9);
+    font-size: 11pt;
+}
+
+/* ── Tabla ── */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 10pt;
+}
+
+th {
+    background: rgba(255,255,255,0.05);
+    color: rgba(255,255,255,0.6);
+    text-align: left;
+    padding: 12px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    font-size: 9pt;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+td {
+    padding: 12px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    color: rgba(255,255,255,0.85);
+}
+
+.monto-negativo { color: #ff6b6b; font-weight: bold; }
+.monto-positivo { color: #51cf66; font-weight: bold; }
+
+.paginacion {
+    text-align: center;
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid rgba(255,255,255,0.08);
+    font-size: 10pt;
+    color: rgba(255,255,255,0.5);
+}
+
+.paginacion span {
+    cursor: pointer;
+    font-weight: bold;
+    color: rgba(255,255,255,0.7);
+}
+
+.paginacion span:hover {
+    color: #fff;
+}
+
+/* ── Form card ── */
+.form-card {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 30px;
+}
+
+.form-title {
+    color: #fff;
+    font-size: 14pt;
+    font-weight: bold;
+    margin-bottom: 20px;
+}
+
+/* ── Summary box ── */
+.summary-box {
+    background: rgba(255,255,255,0.05);
+    border-left: 4px solid rgba(100,150,255,0.6);
+    padding: 15px;
+    margin: 20px 0;
+    border-radius: 0 12px 12px 0;
+    backdrop-filter: blur(5px);
+}
+
+.summary-row {
+    display: flex;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+.summary-row:last-child { border-bottom: none; }
+
+.summary-label {
+    font-weight: bold;
+    width: 45%;
+    color: rgba(255,255,255,0.6);
+    font-size: 9pt;
+}
+
+.summary-value { color: rgba(255,255,255,0.9); }
+
+.summary-monto {
+    font-weight: bold;
+    font-size: 14pt;
+    color: #fff;
+}
+
+.btn-group {
+    display: flex;
+    gap: 12px;
+    margin-top: 20px;
+}
+
+.btn-group .btn-secondary,
+.btn-group .btn-primary {
+    flex: 1;
+}
+
+/* ── Mensajes ── */
+.error-msg {
+    background: rgba(211,47,47,0.15);
+    color: #ff6b6b;
+    padding: 10px 14px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    font-size: 9pt;
+    border-left: 4px solid #ff6b6b;
+    backdrop-filter: blur(5px);
+}
+
+.success-msg {
+    background: rgba(56,142,60,0.15);
+    color: #51cf66;
+    padding: 10px 14px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    font-size: 9pt;
+    border-left: 4px solid #51cf66;
+    backdrop-filter: blur(5px);
+}
+
+.login-note {
+    font-size: 8pt;
+    color: rgba(255,100,100,0.7);
+    margin-top: 12px;
+}
+
+/* ── Admin ── */
+.admin-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.badge-activo {
+    background: rgba(56,142,60,0.2);
+    color: #51cf66;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 8pt;
+    font-weight: bold;
+    border: 1px solid rgba(81,207,102,0.3);
+}
+
+.badge-bloqueado {
+    background: rgba(211,47,47,0.2);
+    color: #ff6b6b;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 8pt;
+    font-weight: bold;
+    border: 1px solid rgba(255,107,107,0.3);
+}
+
+.btn-sm {
+    padding: 5px 12px;
+    border-radius: 6px;
+    font-size: 8pt;
+    cursor: pointer;
+    border: none;
+    font-weight: bold;
+}
+
+.btn-bloquear {
+    background: rgba(211,47,47,0.2);
+    color: #ff6b6b;
+    border: 1px solid rgba(255,107,107,0.3);
+}
+
+.btn-desbloquear {
+    background: rgba(56,142,60,0.2);
+    color: #51cf66;
+    border: 1px solid rgba(81,207,102,0.3);
+}

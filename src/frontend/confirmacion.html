@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Banco UP - Confirmar Transferencia</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="dashboard-container">
+        <div class="form-card">
+
+            <div class="form-title">Resumen de la Operación</div>
+            <p style="font-size:10pt; color:#666; margin-bottom:15px;">
+                Por favor, verifica que los datos sean correctos antes de confirmar.
+            </p>
+
+            <div id="error-msg" class="error-msg" style="display:none;"></div>
+            <div id="success-msg" class="success-msg" style="display:none;"></div>
+
+            <div class="summary-box">
+                <div class="summary-row">
+                    <div class="summary-label">Cuenta Destino:</div>
+                    <div class="summary-value" id="resumen-cuenta"></div>
+                </div>
+                <div class="summary-row">
+                    <div class="summary-label">Concepto:</div>
+                    <div class="summary-value" id="resumen-concepto"></div>
+                </div>
+                <div class="summary-row">
+                    <div class="summary-label">Monto a Transferir:</div>
+                    <div class="summary-value summary-monto" id="resumen-monto"></div>
+                </div>
+            </div>
+
+            <div class="btn-group">
+                <button class="btn-secondary" onclick="window.location.href='transferencia.html'">
+                    Modificar
+                </button>
+                <button class="btn-primary" id="btn-confirmar" onclick="confirmar()">
+                    Confirmar Envío
+                </button>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        const token = localStorage.getItem('token')
+        if (!token) window.location.href = 'index.html'
+
+        const transferencia = JSON.parse(sessionStorage.getItem('transferencia') || '{}')
+        if (!transferencia.cuenta_destino) window.location.href = 'transferencia.html'
+
+        // Mostrar resumen
+        const cuentaFormateada = transferencia.cuenta_destino.replace(/(.{4})/g, '$1 ').trim()
+        document.getElementById('resumen-cuenta').textContent = cuentaFormateada
+        document.getElementById('resumen-concepto').textContent = transferencia.concepto
+        document.getElementById('resumen-monto').textContent = `$${parseFloat(transferencia.monto).toLocaleString('es-MX', {minimumFractionDigits: 2})} MXN`
+
+        async function confirmar() {
+            const btn = document.getElementById('btn-confirmar')
+            btn.disabled = true
+            btn.textContent = 'Procesando...'
+
+            try {
+                const res = await fetch('http://localhost:3000/api/transferencias', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        cuenta_destino: transferencia.cuenta_destino,
+                        monto: transferencia.monto,
+                        concepto: transferencia.concepto
+                    })
+                })
+
+                const data = await res.json()
+
+                if (!res.ok) {
+                    document.getElementById('error-msg').textContent = data.error
+                    document.getElementById('error-msg').style.display = 'block'
+                    btn.disabled = false
+                    btn.textContent = 'Confirmar Envío'
+                    return
+                }
+
+                // Éxito
+                sessionStorage.removeItem('transferencia')
+                document.getElementById('success-msg').innerHTML = '¡Transferencia realizada exitosamente! <a href="dashboard.html" style="color:#388e3c; font-weight:bold;">← Ir al Dashboard</a>'
+                document.getElementById('success-msg').style.display = 'block'
+                btn.style.display = 'none'
+                document.querySelector('.btn-secondary').style.display = 'none'
+
+            } catch (err) {
+                document.getElementById('error-msg').textContent = 'Error de conexión. Intenta de nuevo.'
+                document.getElementById('error-msg').style.display = 'block'
+                btn.disabled = false
+                btn.textContent = 'Confirmar Envío'
+            }
+        }
+    </script>
+</body>
+</html>
