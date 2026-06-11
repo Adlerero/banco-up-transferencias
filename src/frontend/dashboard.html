@@ -71,7 +71,7 @@
 
         async function cargarMovimientos(pagina = 1) {
             try {
-                const res = await fetch(`http://localhost:3000/api/transferencias?page=${pagina}`, {
+                const res = await fetch(`/api/transferencias?page=${pagina}`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 })
 
@@ -130,7 +130,7 @@
         async function init() {
             // Obtener saldo actualizado desde el backend
             try {
-                const resSaldo = await fetch('http://localhost:3000/api/auth/saldo', {
+                const resSaldo = await fetch('/api/auth/saldo', {
                     headers: { 'Authorization': `Bearer ${token}` }
                 })
                 const dataSaldo = await resSaldo.json()
