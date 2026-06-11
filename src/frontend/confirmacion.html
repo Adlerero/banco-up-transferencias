@@ -64,7 +64,7 @@
             btn.textContent = 'Procesando...'
 
             try {
-                const res = await fetch('http://localhost:3000/api/transferencias', {
+                const res = await fetch('/api/transferencias', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

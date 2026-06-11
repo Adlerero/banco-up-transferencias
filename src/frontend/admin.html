@@ -49,7 +49,7 @@
 
         async function cargarUsuarios() {
             try {
-                const res = await fetch('http://localhost:3000/api/admin/usuarios', {
+                const res = await fetch('/api/admin/usuarios', {
                     headers: { 'Authorization': `Bearer ${token}` }
                 })
 
@@ -83,7 +83,7 @@
 
         async function bloquear(id) {
             try {
-                const res = await fetch(`http://localhost:3000/api/admin/usuarios/${id}/bloquear`, {
+                const res = await fetch(`/api/admin/usuarios/${id}/bloquear`, {
                     method: 'PUT',
                     headers: { 'Authorization': `Bearer ${token}` }
                 })
@@ -97,7 +97,7 @@
 
         async function desbloquear(id) {
             try {
-                const res = await fetch(`http://localhost:3000/api/admin/usuarios/${id}/desbloquear`, {
+                const res = await fetch(`/api/admin/usuarios/${id}/desbloquear`, {
                     method: 'PUT',
                     headers: { 'Authorization': `Bearer ${token}` }
                 })
